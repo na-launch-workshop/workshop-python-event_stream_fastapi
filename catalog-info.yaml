@@ -1,0 +1,26 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: workshop-python-event_stream_fastapi
+  title: Event Stream Dashboard
+  description: |
+    Wire up a Kafka topic and watch a live order dashboard hydrate in real time
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+#   backstage.io/techdocs-ref: dir:https://<hosted-git-repo>
+#   gitlab.com/instance: ""
+#   gitlab.com/project-slug: ""
+  tags:
+    - devspaces
+    - python
+    - kafka
+    - amq-streams
+# links:
+#   - url: https://<devspaces-url>/#<hosted-git-repo>
+#     title: 🚀 Launch from Dev Spaces
+#     icon: web
+spec:
+  type: module
+  lifecycle: development
+  owner: group:default/users
+  subcomponentOf: component:default/workshop-repository

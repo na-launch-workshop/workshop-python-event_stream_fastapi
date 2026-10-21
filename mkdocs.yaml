@@ -1,0 +1,6 @@
+site_name: Event Stream Dashboard
+docs_dir: docs
+theme:
+  name: material
+  palette:
+    primary: red

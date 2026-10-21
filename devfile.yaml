@@ -1,0 +1,69 @@
+schemaVersion: 2.3.0
+metadata:
+  name: workshop-python-event_stream_fastapi
+  version: 1.0.0
+  description: Kafka-powered event stream dashboard — wire up AMQ Streams and watch data flow
+attributes:
+  che-editor: vscode
+components:
+  - name: tools
+    container:
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/udi-rhel9:latest
+      endpoints:
+        - exposure: public
+          name: event-dashboard
+          protocol: https
+          targetPort: 8080
+          path: /
+      env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: localhost:9092
+        - name: KAFKA_TOPIC
+          value: orders
+        - name: KAFKA_GROUP_ID
+          value: event-stream-app
+      cpuLimit: '2'
+      cpuRequest: '500m'
+      memoryLimit: '4Gi'
+      memoryRequest: '2Gi'
+      mountSources: true
+
+  # ---------------------------------------------------------------
+  # TODO — Task 1: Add the Kafka sidecar component below this line
+  # See the lab guide in docs/index.md for the YAML to paste in.
+  # ---------------------------------------------------------------
+
+commands:
+  - id: 1-install
+    exec:
+      label: "1. Install dependencies"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "pip install -r requirements-dev.txt"
+      group:
+        kind: build
+        isDefault: true
+  - id: 2-test
+    exec:
+      label: "2. Run tests"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "python -m pytest"
+      group:
+        kind: test
+        isDefault: true
+  - id: 3-start
+    exec:
+      label: "3. Start event dashboard"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
+      group:
+        kind: run
+        isDefault: true
+  - id: 4-produce
+    exec:
+      label: "4. Start order producer"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "python -m app.producer"

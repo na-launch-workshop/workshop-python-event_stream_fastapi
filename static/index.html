@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Event Stream</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Red Hat Display', 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header .badge {
+      background: #ee0000;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .stats {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      flex: 1;
+    }
+    .stat-card .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.08em; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; color: #e94560; margin-top: 0.25rem; }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: #888;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #555;
+      transition: background 0.3s;
+    }
+    .dot.live { background: #00c853; box-shadow: 0 0 6px #00c853; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #16213e;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background: #0f3460;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #aaa;
+    }
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid #1a2a50;
+      font-size: 0.9rem;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr.new-row { animation: flash 0.6s ease-out; }
+    @keyframes flash {
+      0%   { background: rgba(233, 69, 96, 0.25); }
+      100% { background: transparent; }
+    }
+    .empty {
+      text-align: center;
+      padding: 4rem 0;
+      color: #555;
+    }
+    .empty p { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .empty small { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Order Event Stream</h1>
+    <span class="badge">AMQ STREAMS</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="label">Events Received</div>
+      <div class="value" id="count">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Last Event</div>
+      <div class="value" id="last-ts" style="font-size:1rem;margin-top:0.6rem;color:#aaa;">—</div>
+    </div>
+  </div>
+
+  <div class="status-row">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">Waiting for Kafka connection…</span>
+  </div>
+
+  <table id="events-table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr>
+        <td colspan="5" class="empty">
+          <p>No events yet.</p>
+          <small>Complete the tasks in the lab guide to start the stream.</small>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    let knownIds = new Set();
+    let total = 0;
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch('/api/events');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.length === 0) return;
+
+        const tbody = document.getElementById('tbody');
+        const dot = document.getElementById('dot');
+        const statusText = document.getElementById('status-text');
+
+        dot.classList.add('live');
+        statusText.textContent = 'Live — receiving events from Kafka';
+
+        let newRows = '';
+        let hasNew = false;
+
+        for (const evt of data) {
+          if (knownIds.has(evt.id)) continue;
+          knownIds.add(evt.id);
+          total++;
+          hasNew = true;
+          const ts = new Date(evt.timestamp).toLocaleTimeString();
+          newRows += `<tr class="new-row">
+            <td>${evt.id}</td>
+            <td>${evt.customer}</td>
+            <td>${evt.item}</td>
+            <td>${evt.quantity}</td>
+            <td>${ts}</td>
+          </tr>`;
+        }
+
+        if (hasNew) {
+          if (tbody.querySelector('.empty')) tbody.innerHTML = '';
+          tbody.innerHTML = newRows + tbody.innerHTML;
+          document.getElementById('count').textContent = total;
+          document.getElementById('last-ts').textContent =
+            new Date(data[0].timestamp).toLocaleTimeString();
+        }
+      } catch (_) {}
+    }
+
+    fetchEvents();
+    setInterval(fetchEvents, 2000);
+  </script>
+</body>
+</html>
