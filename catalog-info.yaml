@@ -1,7 +1,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: workshop-python-event_stream_fastapi
+  name: workshop-python-kafka
   title: Event Stream Dashboard
   description: |
     Wire up a Kafka topic and watch a live order dashboard hydrate in real time

@@ -1,6 +1,6 @@
 schemaVersion: 2.3.0
 metadata:
-  name: workshop-python-event_stream_fastapi
+  name: workshop-python-kafka
   version: 1.0.0
   description: Kafka-powered event stream dashboard — wire up AMQ Streams and watch data flow
 attributes:
