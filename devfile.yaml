@@ -43,27 +43,33 @@ commands:
       group:
         kind: build
         isDefault: true
-  - id: 2-test
+  - id: 2-create-topic
     exec:
-      label: "2. Run tests"
+      label: "2. Create orders topic"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "python -m app.create_topic"
+  - id: 3-test
+    exec:
+      label: "3. Run tests"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python -m pytest"
       group:
         kind: test
         isDefault: true
-  - id: 3-start
+  - id: 4-start
     exec:
-      label: "3. Start event dashboard"
+      label: "4. Start event dashboard"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
       group:
         kind: run
         isDefault: true
-  - id: 4-produce
+  - id: 5-produce
     exec:
-      label: "4. Start order producer"
+      label: "5. Start order producer"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python -m app.producer"

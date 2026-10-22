@@ -73,32 +73,19 @@ Open `devfile.yaml`. Find the `TODO` comment under the `components:` section and
 
 ## Task 2 — Create the Kafka topic
 
-Once the workspace restarts, open a **new terminal** and switch to the `kafka` container (use the container selector in the Dev Spaces terminal toolbar).
+Once the workspace restarts, run command **"2. Create orders topic"** from the Dev Spaces command palette.
 
-Run:
+You should see:
 
-```bash
-/opt/kafka/bin/kafka-topics.sh \
-  --create \
-  --topic orders \
-  --bootstrap-server localhost:9092 \
-  --partitions 1 \
-  --replication-factor 1
 ```
-
-Verify it worked:
-
-```bash
-/opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+Topic 'orders' created on localhost:9092
 ```
-
-You should see `orders` in the output.
 
 ---
 
 ## Task 3 — Start the producer and watch the dashboard
 
-Back in the **tools container terminal**, run command **"4. Start order producer"** from the Dev Spaces command palette, or run directly:
+Run command **"5. Start order producer"** from the Dev Spaces command palette, or run directly:
 
 ```bash
 python -m app.producer
