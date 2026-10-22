@@ -6,183 +6,367 @@
   <title>Order Event Stream</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d0d1a;
+      --surface: #111124;
+      --border:  #1e1e40;
+      --accent:  #ee0000;
+      --live:    #00e676;
+      --text:    #dde0f0;
+      --muted:   #55556a;
+    }
+
     body {
       font-family: 'Red Hat Display', 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
     }
+
+    /* ── Header ────────────────────────────────── */
     header {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
     }
-    header h1 { font-size: 1.6rem; font-weight: 700; }
-    header .badge {
-      background: #ee0000;
-      color: white;
-      font-size: 0.7rem;
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(120deg, #fff 30%, #999);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.6rem;
       font-weight: 700;
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.1em;
     }
-    .stats {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .stat-card {
-      background: #16213e;
-      border: 1px solid #0f3460;
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
-      flex: 1;
-    }
-    .stat-card .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.08em; }
-    .stat-card .value { font-size: 2rem; font-weight: 700; color: #e94560; margin-top: 0.25rem; }
-    .status-row {
+    .status-pill {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.85rem;
-      color: #888;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.78rem;
+      color: var(--muted);
     }
     .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #555;
-      transition: background 0.3s;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
     }
-    .dot.live { background: #00c853; box-shadow: 0 0 6px #00c853; }
+    .dot.live {
+      background: var(--live);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,230,118,.5); }
+      50%       { box-shadow: 0 0 0 7px rgba(0,230,118,0); }
+    }
+
+    /* ── Stat cards ────────────────────────────── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+    .stat-card .label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      transition: transform 0.15s ease;
+    }
+    .stat-card .value.string-val {
+      font-size: 1rem;
+      margin-top: 0.4rem;
+      color: var(--text);
+    }
+    .stat-card .value.bump { transform: scale(1.18); }
+
+    /* ── Sparkline ─────────────────────────────── */
+    .spark-wrap {
+      margin-bottom: 1.25rem;
+    }
+    .spark-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+    .sparkline {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 52px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .spark-bar {
+      flex: 1;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+      opacity: 0.55;
+      transition: height 0.3s ease, opacity 0.3s;
+    }
+    .spark-bar.active { opacity: 1; }
+
+    /* ── Table ─────────────────────────────────── */
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #16213e;
-      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       overflow: hidden;
     }
     th {
-      background: #0f3460;
+      background: #09091a;
       text-align: left;
-      padding: 0.75rem 1rem;
-      font-size: 0.75rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #aaa;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 600;
     }
     td {
-      padding: 0.65rem 1rem;
-      border-bottom: 1px solid #1a2a50;
-      font-size: 0.9rem;
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
     }
     tr:last-child td { border-bottom: none; }
-    tr.new-row { animation: flash 0.6s ease-out; }
-    @keyframes flash {
-      0%   { background: rgba(233, 69, 96, 0.25); }
-      100% { background: transparent; }
+    tr.new-row { animation: slide-in 0.35s ease-out; }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
-    .empty {
-      text-align: center;
-      padding: 4rem 0;
-      color: #555;
+
+    .customer-cell { display: flex; align-items: center; gap: 0.5rem; }
+    .avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: 0;
     }
-    .empty p { font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .empty small { font-size: 0.8rem; }
+    .order-id { font-family: monospace; font-size: 0.8rem; color: var(--muted); }
+    .qty-pips { display: flex; gap: 3px; align-items: center; }
+    .pip {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.6;
+    }
+    .qty-num { margin-left: 5px; font-size: 0.8rem; color: var(--muted); }
+
+    .empty { text-align: center; padding: 4rem 0; color: var(--muted); }
+    .empty p { font-size: 1rem; margin-bottom: 0.4rem; }
+    .empty small { font-size: 0.78rem; opacity: 0.55; }
   </style>
 </head>
 <body>
+
   <header>
-    <h1>Order Event Stream</h1>
-    <span class="badge">AMQ STREAMS</span>
+    <div class="header-left">
+      <h1>Order Event Stream</h1>
+      <span class="badge">AMQ STREAMS</span>
+    </div>
+    <div class="status-pill">
+      <div class="dot" id="dot"></div>
+      <span id="status-text">Waiting for Kafka…</span>
+    </div>
   </header>
 
   <div class="stats">
     <div class="stat-card">
-      <div class="label">Events Received</div>
+      <div class="label">Total Events</div>
       <div class="value" id="count">0</div>
     </div>
     <div class="stat-card">
-      <div class="label">Last Event</div>
-      <div class="value" id="last-ts" style="font-size:1rem;margin-top:0.6rem;color:#aaa;">—</div>
+      <div class="label">Events / min</div>
+      <div class="value" id="rate">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Unique Customers</div>
+      <div class="value" id="customers">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Top Item</div>
+      <div class="value string-val" id="top-item">—</div>
     </div>
   </div>
 
-  <div class="status-row">
-    <div class="dot" id="dot"></div>
-    <span id="status-text">Waiting for Kafka connection…</span>
+  <div class="spark-wrap">
+    <div class="spark-label">Activity — last 60 seconds</div>
+    <div class="sparkline" id="sparkline"></div>
   </div>
 
-  <table id="events-table">
+  <table>
     <thead>
       <tr>
         <th>Order ID</th>
         <th>Customer</th>
         <th>Item</th>
         <th>Qty</th>
-        <th>Timestamp</th>
+        <th>Time</th>
       </tr>
     </thead>
     <tbody id="tbody">
       <tr>
         <td colspan="5" class="empty">
           <p>No events yet.</p>
-          <small>Complete the tasks in the lab guide to start the stream.</small>
+          <small>Complete the lab tasks to start the stream.</small>
         </td>
       </tr>
     </tbody>
   </table>
 
   <script>
-    let knownIds = new Set();
+    const PALETTE = ['#e94560','#0ea5a0','#f7931e','#8b5cf6','#10b981','#3b82f6','#ec4899','#f59e0b'];
+    const customerColors = {};
+    let colorCursor = 0;
+    function colorFor(name) {
+      if (!customerColors[name]) customerColors[name] = PALETTE[colorCursor++ % PALETTE.length];
+      return customerColors[name];
+    }
+
+    // Sparkline — 30 × 2 s buckets = 60 s window
+    const N = 30, BKT = 2000;
+    const buckets = new Array(N).fill(0);
+    const t0 = Date.now();
+    function bucketIdx() { return Math.floor((Date.now() - t0) / BKT) % N; }
+    let lastBkt = bucketIdx();
+
+    setInterval(() => {
+      const cur = bucketIdx();
+      if (cur !== lastBkt) { buckets[cur] = 0; lastBkt = cur; }
+      const max = Math.max(...buckets, 1);
+      document.getElementById('sparkline').innerHTML = buckets.map((v, i) =>
+        `<div class="spark-bar${i === cur ? ' active' : ''}" style="height:${Math.max(Math.round(v/max*100), 3)}%"></div>`
+      ).join('');
+    }, 400);
+
+    // State
+    const seen = new Set();
+    const customerSet = new Set();
+    const itemTally = {};
+    const eventTs = [];
     let total = 0;
 
-    async function fetchEvents() {
+    function eventsPerMin() {
+      const cutoff = Date.now() - 60000;
+      while (eventTs.length && eventTs[0] < cutoff) eventTs.shift();
+      return eventTs.length;
+    }
+
+    function bump(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 200);
+    }
+
+    async function poll() {
       try {
         const res = await fetch('/api/events');
         if (!res.ok) return;
         const data = await res.json();
-        if (data.length === 0) return;
+        if (!data.length) return;
+
+        document.getElementById('dot').classList.add('live');
+        document.getElementById('status-text').textContent = 'Live — receiving events from Kafka';
 
         const tbody = document.getElementById('tbody');
-        const dot = document.getElementById('dot');
-        const statusText = document.getElementById('status-text');
+        let added = false, html = '';
 
-        dot.classList.add('live');
-        statusText.textContent = 'Live — receiving events from Kafka';
-
-        let newRows = '';
-        let hasNew = false;
-
-        for (const evt of data) {
-          if (knownIds.has(evt.id)) continue;
-          knownIds.add(evt.id);
+        for (const e of data) {
+          if (seen.has(e.id)) continue;
+          seen.add(e.id);
           total++;
-          hasNew = true;
-          const ts = new Date(evt.timestamp).toLocaleTimeString();
-          newRows += `<tr class="new-row">
-            <td>${evt.id}</td>
-            <td>${evt.customer}</td>
-            <td>${evt.item}</td>
-            <td>${evt.quantity}</td>
-            <td>${ts}</td>
+          added = true;
+          eventTs.push(Date.now());
+          customerSet.add(e.customer);
+          itemTally[e.item] = (itemTally[e.item] || 0) + 1;
+          buckets[bucketIdx()]++;
+
+          const color = colorFor(e.customer);
+          const ts = new Date(e.timestamp).toLocaleTimeString();
+          const pips = Array(e.quantity).fill('<div class="pip"></div>').join('');
+          html += `<tr class="new-row">
+            <td><span class="order-id">${e.id}</span></td>
+            <td><div class="customer-cell">
+              <div class="avatar" style="background:${color}">${e.customer.slice(0,2).toUpperCase()}</div>
+              ${e.customer}
+            </div></td>
+            <td>${e.item}</td>
+            <td><div class="qty-pips">${pips}<span class="qty-num">${e.quantity}</span></div></td>
+            <td style="color:var(--muted);font-size:.8rem">${ts}</td>
           </tr>`;
         }
 
-        if (hasNew) {
+        if (added) {
           if (tbody.querySelector('.empty')) tbody.innerHTML = '';
-          tbody.innerHTML = newRows + tbody.innerHTML;
-          document.getElementById('count').textContent = total;
-          document.getElementById('last-ts').textContent =
-            new Date(data[0].timestamp).toLocaleTimeString();
+          tbody.innerHTML = html + tbody.innerHTML;
+          document.getElementById('count').textContent = total; bump('count');
+          document.getElementById('customers').textContent = customerSet.size;
+          const top = Object.entries(itemTally).sort((a,b) => b[1]-a[1])[0];
+          document.getElementById('top-item').textContent = top ? top[0] : '—';
         }
-      } catch (_) {}
+
+        document.getElementById('rate').textContent = eventsPerMin();
+      } catch(_) {}
     }
 
-    fetchEvents();
-    setInterval(fetchEvents, 2000);
+    poll();
+    setInterval(poll, 2000);
+    setInterval(() => { document.getElementById('rate').textContent = eventsPerMin(); }, 5000);
   </script>
+
 </body>
 </html>
