@@ -31,6 +31,7 @@ def _consume_loop(bootstrap_servers: str, topic: str, group_id: str) -> None:
                 "group.id": group_id,
                 "auto.offset.reset": "earliest",
                 "socket.timeout.ms": 3000,
+                "log_level": 0,
             })
             consumer.subscribe([topic])
             logger.info("Consumer connected — listening on topic '%s'", topic)
