@@ -15,6 +15,14 @@ customers = [
 ]
 
 conn = sqlite3.connect(db)
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS customers (
+        name TEXT PRIMARY KEY,
+        department TEXT,
+        role TEXT,
+        location TEXT
+    )
+""")
 conn.executemany(
     "INSERT OR IGNORE INTO customers (name, department, role, location) VALUES (?, ?, ?, ?)",
     customers,
