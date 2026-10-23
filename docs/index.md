@@ -16,6 +16,7 @@ Your job: wire up the broker, create the topic, and start the producer. If you d
 
 - OpenShift Dev Spaces workspace open with this repository
 - Run **"1. Install dependencies"** from the Dev Spaces command palette before starting
+- After any workspace restart (e.g. after Task 1), re-run **"1. Install dependencies"** before continuing
 
 ---
 
