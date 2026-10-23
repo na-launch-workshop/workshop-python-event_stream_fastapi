@@ -1,6 +1,6 @@
 # Module: Event Stream Dashboard with AMQ Streams
 
-**Technology Stack:** Python · FastAPI · Apache Kafka (AMQ Streams)
+**Technology Stack:** Python · FastAPI · Apache Kafka (AMQ Streams) · datasette · SQLite
 
 ---
 
@@ -24,10 +24,11 @@ Your job: wire up the broker, create the topic, and start the producer. If you d
 
 | File | Role |
 |------|------|
-| `app/main.py` | FastAPI app — serves the dashboard and `/api/events` |
+| `app/main.py` | FastAPI app — serves the dashboard, `/api/events`, and `/api/customers` |
 | `app/consumer.py` | Background thread — polls Kafka and feeds events into the dashboard |
 | `app/producer.py` | Standalone script — generates fake orders and publishes them |
-| `devfile.yaml` | Workspace definition — **you'll edit this in Task 1** |
+| `data/customers.db` | SQLite database — customer profiles served via datasette |
+| `devfile.yaml` | Workspace definition — **you'll edit this in Tasks 1 and 4** |
 
 The consumer is already running. It retries every 5 seconds until it can reach a broker. As soon as the broker and topic exist, it connects automatically.
 
@@ -112,3 +113,54 @@ Stop the producer (`Ctrl+C`). Open a second terminal in the `kafka` container an
 Notice the **LAG** column. Restart the producer and watch the lag drop to zero as the consumer catches up.
 
 > In the next session we'll use KEDA to automatically scale a consumer deployment based on this lag.
+
+---
+
+## Task 4 — Add the datasette sidecar to `devfile.yaml`
+
+The dashboard has a **Customers** panel that enriches order events with profile data. It polls `localhost:8001` — but datasette isn't running yet.
+
+Open `devfile.yaml` and paste in the following component alongside the kafka sidecar:
+
+```yaml
+  - name: datasette
+    container:
+      image: datasetteproject/datasette
+      endpoints:
+        - name: datasette
+          exposure: internal
+          targetPort: 8001
+      command: ["datasette", "serve", "/projects/workshop-python-kafka/data/", "--host", "0.0.0.0", "--port", "8001"]
+      cpuLimit: '500m'
+      memoryLimit: '512Mi'
+      mountSources: true
+```
+
+> `mountSources: true` gives datasette access to the project volume so it can read `data/customers.db`.
+
+**Save and restart the workspace**, then re-run **"1. Install dependencies"**.
+
+---
+
+## Task 5 — Add customer data
+
+The SQLite database is at `data/customers.db`. The SQLite extension is already installed in your editor.
+
+1. In the VS Code Explorer, right-click `data/customers.db` and select **Open Database**
+2. Expand the **SQLITE EXPLORER** panel in the sidebar
+3. Click the ▶ icon next to `customers` to open a query window
+4. Insert some rows:
+
+```sql
+INSERT INTO customers (name, department, role, location) VALUES
+  ('Alice', 'Engineering', 'Backend Developer', 'New York'),
+  ('Bob', 'Product', 'Product Manager', 'Chicago'),
+  ('Carlos', 'Engineering', 'DevOps Engineer', 'Austin'),
+  ('Dana', 'Design', 'UX Designer', 'Seattle'),
+  ('Eve', 'Engineering', 'Frontend Developer', 'Boston'),
+  ('Frank', 'Sales', 'Account Executive', 'Denver'),
+  ('Grace', 'Engineering', 'Data Engineer', 'San Francisco'),
+  ('Hiro', 'Product', 'Product Analyst', 'Los Angeles');
+```
+
+5. Run the query — the Customers panel on the dashboard will populate on the next poll.

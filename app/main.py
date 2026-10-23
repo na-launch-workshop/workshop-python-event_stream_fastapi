@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import load_config
 from .consumer import events, start_consumer
+
+DATASETTE_URL = "http://localhost:8001/customers/customers.json?_shape=array"
 
 
 @asynccontextmanager
@@ -28,6 +31,14 @@ def create_app() -> FastAPI:
     @application.get("/api/events")
     def get_events():
         return JSONResponse(content=list(events))
+
+    @application.get("/api/customers")
+    def get_customers():
+        try:
+            response = httpx.get(DATASETTE_URL, timeout=2.0)
+            return JSONResponse(content=response.json())
+        except Exception:
+            return JSONResponse(content=[])
 
     return application
 

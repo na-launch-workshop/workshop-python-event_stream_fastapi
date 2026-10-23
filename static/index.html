@@ -44,7 +44,6 @@
       background-clip: text;
     }
     .badge {
-      background: var(--accent);
       color: #fff;
       font-size: 0.6rem;
       font-weight: 700;
@@ -52,6 +51,9 @@
       border-radius: 4px;
       letter-spacing: 0.1em;
     }
+    .badge.kafka  { background: var(--accent); }
+    .badge.sqlite { background: #0ea5a0; }
+
     .status-pill {
       display: flex;
       align-items: center;
@@ -122,9 +124,7 @@
     .stat-card .value.bump { transform: scale(1.18); }
 
     /* ── Sparkline ─────────────────────────────── */
-    .spark-wrap {
-      margin-bottom: 1.25rem;
-    }
+    .spark-wrap { margin-bottom: 1.25rem; }
     .spark-label {
       font-size: 0.68rem;
       color: var(--muted);
@@ -152,7 +152,15 @@
     }
     .spark-bar.active { opacity: 1; }
 
-    /* ── Table ─────────────────────────────────── */
+    /* ── Main layout ───────────────────────────── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    /* ── Events table ──────────────────────────── */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -192,21 +200,69 @@
       font-weight: 800;
       color: #fff;
       flex-shrink: 0;
-      letter-spacing: 0;
     }
     .order-id { font-family: monospace; font-size: 0.8rem; color: var(--muted); }
     .qty-pips { display: flex; gap: 3px; align-items: center; }
-    .pip {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: 0.6;
-    }
+    .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
     .qty-num { margin-left: 5px; font-size: 0.8rem; color: var(--muted); }
 
     .empty { text-align: center; padding: 4rem 0; color: var(--muted); }
     .empty p { font-size: 1rem; margin-bottom: 0.4rem; }
     .empty small { font-size: 0.78rem; opacity: 0.55; }
+
+    /* ── Customers panel ───────────────────────── */
+    .customers-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: #09091a;
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header span {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 600;
+      flex: 1;
+    }
+    .customer-cards { padding: 0.5rem; }
+    .customer-card {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.6rem;
+      border-radius: 6px;
+      margin-bottom: 0.25rem;
+      transition: background 0.3s;
+    }
+    .customer-card:last-child { margin-bottom: 0; }
+    .customer-card.active { background: rgba(255,255,255,0.05); }
+    .customer-card.ping { animation: card-ping 0.5s ease-out; }
+    @keyframes card-ping {
+      0%   { background: rgba(238,0,0,0.2); }
+      100% { background: rgba(255,255,255,0.05); }
+    }
+    .card-info { flex: 1; min-width: 0; }
+    .card-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-dept { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-loc  { font-size: 0.68rem; color: var(--muted); opacity: 0.6; }
+
+    .panel-empty {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    .panel-empty .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
@@ -214,7 +270,8 @@
   <header>
     <div class="header-left">
       <h1>Order Event Stream</h1>
-      <span class="badge">AMQ STREAMS</span>
+      <span class="badge kafka">AMQ STREAMS</span>
+      <span class="badge sqlite" id="sqlite-badge" style="display:none">DATASETTE</span>
     </div>
     <div class="status-pill">
       <div class="dot" id="dot"></div>
@@ -233,7 +290,7 @@
     </div>
     <div class="stat-card">
       <div class="label">Unique Customers</div>
-      <div class="value" id="customers">0</div>
+      <div class="value" id="customers-count">0</div>
     </div>
     <div class="stat-card">
       <div class="label">Top Item</div>
@@ -246,25 +303,39 @@
     <div class="sparkline" id="sparkline"></div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Customer</th>
-        <th>Item</th>
-        <th>Qty</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="tbody">
-      <tr>
-        <td colspan="5" class="empty">
-          <p>No events yet.</p>
-          <small>Complete the lab tasks to start the stream.</small>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="main-layout">
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr>
+          <td colspan="5" class="empty">
+            <p>No events yet.</p>
+            <small>Complete the lab tasks to start the stream.</small>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="customers-panel">
+      <div class="panel-header">
+        <span>Customers</span>
+      </div>
+      <div id="customer-cards" class="customer-cards">
+        <div class="panel-empty">
+          <div class="icon">🗄️</div>
+          Add the datasette sidecar and seed the database to see customer profiles here.
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const PALETTE = ['#e94560','#0ea5a0','#f7931e','#8b5cf6','#10b981','#3b82f6','#ec4899','#f59e0b'];
@@ -297,6 +368,7 @@
     const itemTally = {};
     const eventTs = [];
     let total = 0;
+    let customerProfiles = {};
 
     function eventsPerMin() {
       const cutoff = Date.now() - 60000;
@@ -312,7 +384,41 @@
       setTimeout(() => el.classList.remove('bump'), 200);
     }
 
-    async function poll() {
+    function pingCustomerCard(name) {
+      const card = document.querySelector(`[data-customer="${name}"]`);
+      if (!card) return;
+      card.classList.remove('ping');
+      void card.offsetWidth;
+      card.classList.add('ping');
+    }
+
+    async function pollCustomers() {
+      try {
+        const res = await fetch('/api/customers');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.length) return;
+
+        document.getElementById('sqlite-badge').style.display = '';
+        customerProfiles = {};
+        data.forEach(c => { customerProfiles[c.name] = c; });
+
+        const container = document.getElementById('customer-cards');
+        container.innerHTML = data.map(c => {
+          const color = colorFor(c.name);
+          return `<div class="customer-card" data-customer="${c.name}">
+            <div class="avatar" style="background:${color}">${c.name.slice(0,2).toUpperCase()}</div>
+            <div class="card-info">
+              <div class="card-name">${c.name}</div>
+              <div class="card-dept">${c.role} · ${c.department}</div>
+              <div class="card-loc">${c.location}</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch(_) {}
+    }
+
+    async function pollEvents() {
       try {
         const res = await fetch('/api/events');
         if (!res.ok) return;
@@ -334,6 +440,7 @@
           customerSet.add(e.customer);
           itemTally[e.item] = (itemTally[e.item] || 0) + 1;
           buckets[bucketIdx()]++;
+          pingCustomerCard(e.customer);
 
           const color = colorFor(e.customer);
           const ts = new Date(e.timestamp).toLocaleTimeString();
@@ -354,7 +461,7 @@
           if (tbody.querySelector('.empty')) tbody.innerHTML = '';
           tbody.innerHTML = html + tbody.innerHTML;
           document.getElementById('count').textContent = total; bump('count');
-          document.getElementById('customers').textContent = customerSet.size;
+          document.getElementById('customers-count').textContent = customerSet.size;
           const top = Object.entries(itemTally).sort((a,b) => b[1]-a[1])[0];
           document.getElementById('top-item').textContent = top ? top[0] : '—';
         }
@@ -363,8 +470,10 @@
       } catch(_) {}
     }
 
-    poll();
-    setInterval(poll, 2000);
+    pollEvents();
+    pollCustomers();
+    setInterval(pollEvents, 2000);
+    setInterval(pollCustomers, 5000);
     setInterval(() => { document.getElementById('rate').textContent = eventsPerMin(); }, 5000);
   </script>
 
