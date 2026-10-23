@@ -39,7 +39,7 @@ commands:
       label: "1. Install dependencies"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "pip install -r requirements-dev.txt"
+      commandLine: "python3.11 -m pip install -r requirements-dev.txt"
       group:
         kind: build
         isDefault: true
@@ -48,13 +48,13 @@ commands:
       label: "2. Create orders topic"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "python -m app.create_topic"
+      commandLine: "python3.11 -m app.create_topic"
   - id: 3-test
     exec:
       label: "3. Run tests"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "python -m pytest"
+      commandLine: "python3.11 -m pytest"
       group:
         kind: test
         isDefault: true
@@ -63,7 +63,7 @@ commands:
       label: "4. Start event dashboard"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
+      commandLine: "python3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
       group:
         kind: run
         isDefault: true
@@ -72,4 +72,4 @@ commands:
       label: "5. Start order producer"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "python -m app.producer"
+      commandLine: "python3.11 -m app.producer"
