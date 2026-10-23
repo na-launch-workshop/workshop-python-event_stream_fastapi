@@ -394,7 +394,7 @@
 
     async function pollCustomers() {
       try {
-        const res = await fetch('/api/customers');
+        const res = await fetch('/api/customers', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (!data.length) return;
@@ -420,7 +420,7 @@
 
     async function pollEvents() {
       try {
-        const res = await fetch('/api/events');
+        const res = await fetch('/api/events', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (!data.length) return;

@@ -1,0 +1,4 @@
+data/customers.db
+__pycache__/
+*.pyc
+.venv/

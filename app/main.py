@@ -36,9 +36,12 @@ def create_app() -> FastAPI:
     def get_customers():
         try:
             response = httpx.get(DATASETTE_URL, timeout=2.0)
-            return JSONResponse(content=response.json())
+            return JSONResponse(
+                content=response.json(),
+                headers={"Cache-Control": "no-store"},
+            )
         except Exception:
-            return JSONResponse(content=[])
+            return JSONResponse(content=[], headers={"Cache-Control": "no-store"})
 
     return application
 
