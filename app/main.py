@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import load_config
 from .consumer import events, start_consumer
 
-DATASETTE_URL = "http://localhost:8001/customers/customers.json?_shape=array"
+DATASETTE_URL = "http://localhost:8001/customers/customers.json?_shape=array&_ttl=0"
 
 
 @asynccontextmanager
