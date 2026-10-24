@@ -3,22 +3,21 @@ from __future__ import annotations
 import json
 import random
 import time
-import uuid
 from datetime import datetime, timezone
 
 from confluent_kafka import Producer
 
 from .config import load_config
 
-ZONES = [
-    "North Grid", "South Grid", "East Grid", "West Grid",
-    "City Centre", "Industrial Park", "Suburbs North", "Suburbs South",
+ROOMS = [
+    "Kitchen", "Living Room", "Master Bedroom", "Bedroom 2",
+    "Home Office", "Garage", "Basement", "Garden",
 ]
 
-METER_TYPES = [
-    ("residential",  0.5,  3.0),
-    ("commercial",   2.0, 15.0),
-    ("industrial",  10.0, 50.0),
+CIRCUITS = [
+    ("kitchen",       0.5,  4.0),
+    ("hvac",          1.5,  6.0),
+    ("entertainment", 0.1,  1.5),
 ]
 
 
@@ -26,21 +25,21 @@ def main() -> None:
     cfg = load_config()
     producer = Producer({"bootstrap.servers": cfg.bootstrap_servers})
 
-    print(f"Publishing meter readings to '{cfg.topic}' on {cfg.bootstrap_servers}")
+    print(f"Publishing home readings to '{cfg.topic}' on {cfg.bootstrap_servers}")
     print("Press Ctrl+C to stop.\n")
 
     while True:
-        meter_type, min_kwh, max_kwh = random.choice(METER_TYPES)
+        circuit_type, min_kwh, max_kwh = random.choice(CIRCUITS)
         reading = {
-            "meter_id": f"MTR-{random.randint(1000, 9999)}",
-            "zone": random.choice(ZONES),
-            "type": meter_type,
-            "kwh": round(random.uniform(min_kwh, max_kwh), 2),
+            "circuit_id": f"CB-{random.randint(1, 20):02d}",
+            "room": random.choice(ROOMS),
+            "type": circuit_type,
+            "kwh": round(random.uniform(min_kwh, max_kwh), 3),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         producer.produce(cfg.topic, json.dumps(reading).encode("utf-8"))
         producer.poll(0)
-        print(f"  → {reading['meter_id']}  {reading['zone']:16s}  {reading['type']:12s}  {reading['kwh']} kWh")
+        print(f"  → {reading['circuit_id']}  {reading['room']:15s}  {reading['type']:14s}  {reading['kwh']} kWh")
         time.sleep(2)
 
 

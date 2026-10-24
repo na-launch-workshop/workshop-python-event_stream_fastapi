@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GridWatch — Operations Dashboard</title>
+  <title>HomeGrid — Energy Monitor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
@@ -213,9 +213,9 @@
     @keyframes sli { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
     .mid-id { font-family:var(--mono); font-size:.72rem; color:var(--muted); }
     .chip { font-size:.56rem; font-weight:700; padding:.1rem .32rem; border-radius:3px; text-transform:uppercase; letter-spacing:.07em; font-family:var(--mono); border:1px solid; }
-    .chip.residential { color:var(--accent); border-color:rgba(0,163,224,.3); background:rgba(0,163,224,.07); }
-    .chip.commercial  { color:var(--mid);    border-color:rgba(247,147,30,.3); background:rgba(247,147,30,.07); }
-    .chip.industrial  { color:var(--peak);   border-color:rgba(255,77,28,.3);  background:rgba(255,77,28,.07); }
+    .chip.kitchen       { color:var(--accent); border-color:rgba(0,163,224,.3); background:rgba(0,163,224,.07); }
+    .chip.hvac          { color:var(--mid);    border-color:rgba(247,147,30,.3); background:rgba(247,147,30,.07); }
+    .chip.entertainment { color:#8b5cf6;        border-color:rgba(139,92,246,.3); background:rgba(139,92,246,.07); }
     .kval { font-family:var(--mono); font-weight:700; }
     .cval { font-family:var(--mono); color:var(--live); font-size:.74rem; }
     .tval { font-family:var(--mono); color:var(--muted); font-size:.68rem; }
@@ -255,8 +255,8 @@
     </div>
     <div class="hdivider"></div>
     <div class="app-title">
-      <h1>GridWatch</h1>
-      <div class="app-sub">Live Grid Operations — Real-time Monitoring System</div>
+      <h1>HomeGrid</h1>
+      <div class="app-sub">Home Energy Monitor — Real-time Power Consumption</div>
     </div>
     <div class="header-right">
       <div class="badges">
@@ -347,13 +347,13 @@
     <div class="sc"><div class="lbl">Total Readings</div><div class="val" id="cnt">0</div></div>
     <div class="sc"><div class="lbl">Readings / min</div><div class="val" id="rpm">—</div></div>
     <div class="sc"><div class="lbl">Total kWh</div><div class="val" id="tkwh">—</div></div>
-    <div class="sc"><div class="lbl">Peak kWh Reading</div><div class="val" id="pkwh">—</div></div>
+    <div class="sc"><div class="lbl">Peak Circuit kWh</div><div class="val" id="pkwh">—</div></div>
     <div class="sc"><div class="lbl">Est. Cost Today</div><div class="val sm" id="ecost">—</div></div>
   </div>
 
   <!-- Zone strip -->
   <div class="zone-strip">
-    <div class="zone-lbl">Zone Activity</div>
+    <div class="zone-lbl">Room Activity</div>
     <div class="zones" id="zones"></div>
   </div>
 
@@ -367,12 +367,12 @@
   <div class="main">
     <div class="table-wrap">
       <div class="th-bar">
-        <span class="th-label">Live Meter Readings</span>
+        <span class="th-label">Live Circuit Readings</span>
         <span class="th-label" id="tcount">—</span>
       </div>
       <table>
         <thead><tr>
-          <th>Meter ID</th><th>Zone</th><th>Type</th><th>kWh</th><th>Cost</th><th>Equivalent</th><th>Time</th>
+          <th>Circuit</th><th>Room</th><th>Type</th><th>kWh</th><th>Cost</th><th>Equivalent</th><th>Time</th>
         </tr></thead>
         <tbody id="tbody">
           <tr><td colspan="7" class="empty"><p>Awaiting meter readings…</p><small>Complete lab tasks to start the stream.</small></td></tr>
@@ -388,11 +388,11 @@
   </div>
 
 <script>
-  const ZONES = ["North Grid","South Grid","East Grid","West Grid","City Centre","Industrial Park","Suburbs North","Suburbs South"];
+  const ZONES = ["Kitchen","Living Room","Master Bedroom","Bedroom 2","Home Office","Garage","Basement","Garden"];
   const TYPE_CFG = {
-    residential: { color:'#00a3e0', label:'Residential' },
-    commercial:  { color:'#f7931e', label:'Commercial' },
-    industrial:  { color:'#ff4d1c', label:'Industrial' },
+    kitchen:       { color:'#00a3e0', label:'Kitchen' },
+    hvac:          { color:'#f7931e', label:'HVAC' },
+    entertainment: { color:'#8b5cf6', label:'Entertainment' },
   };
 
   // State
@@ -401,7 +401,7 @@
   let total=0, totKwh=0, totCost=0, peakKwh=0;
   let curPrice=null, appData=[];
   const zoneCounts = {}; ZONES.forEach(z => zoneCounts[z]=0);
-  const typeCounts = { residential:0, commercial:0, industrial:0 };
+  const typeCounts = { kitchen:0, hvac:0, entertainment:0 };
 
   // Sparkline
   const N=30, BKT=2000;
@@ -592,22 +592,22 @@
       let added=false, html='';
 
       for(const e of data){
-        const k=`${e.meter_id}-${e.timestamp}`;
+        const k=`${e.circuit_id}-${e.timestamp}`;
         if(seen.has(k))continue;
         seen.add(k); total++; added=true;
         evTs.push(Date.now());
         buckets[bIdx()]++;
         totKwh+=e.kwh;
         if(e.kwh>peakKwh)peakKwh=e.kwh;
-        zoneCounts[e.zone]=(zoneCounts[e.zone]||0)+1;
+        zoneCounts[e.room]=(zoneCounts[e.room]||0)+1;
         typeCounts[e.type]=(typeCounts[e.type]||0)+1;
         updateScope(e.kwh);
         const cost=curPrice?e.kwh*curPrice:null;
         if(cost)totCost+=cost;
         const ts=new Date(e.timestamp).toLocaleTimeString();
         html+=`<tr class="nr">
-          <td><span class="mid-id">${e.meter_id}</span></td>
-          <td>${e.zone}</td>
+          <td><span class="mid-id">${e.circuit_id}</span></td>
+          <td>${e.room}</td>
           <td><span class="chip ${e.type}">${e.type}</span></td>
           <td><span class="kval">${e.kwh}</span></td>
           <td><span class="cval">${cost?`$${cost.toFixed(4)}`:'—'}</span></td>
