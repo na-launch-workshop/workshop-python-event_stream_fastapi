@@ -131,7 +131,27 @@ Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explo
 
 ---
 
-> **Note:** The electricity price API runs automatically as a pre-configured sidecar. Open `sidecar/price_api.py` to see how it works — it returns the current rate based on time of day (off-peak / mid-peak / peak). No action needed.
+## Task 6 — Add the electricity price sidecar
+
+Open `sidecar/price_api.py` — take a look at how it works. It returns the current electricity rate based on time of day (off-peak / mid-peak / peak).
+
+Open `devfile.yaml` and paste the following under the third `TODO` comment:
+
+```yaml
+  - name: price-api
+    container:
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
+      endpoints:
+        - name: price-api
+          exposure: internal
+          targetPort: 5000
+      cpuLimit: '250m'
+      memoryLimit: '256Mi'
+```
+
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
+
+The price ticker in the header shows the current rate. Appliance daily costs and circuit reading costs update automatically.
 
 ---
 

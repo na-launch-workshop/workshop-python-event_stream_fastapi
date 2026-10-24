@@ -38,15 +38,10 @@ components:
   # See the lab guide in docs/index.md for the YAML to paste in.
   # ---------------------------------------------------------------
 
-  - name: price-api
-    container:
-      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
-      endpoints:
-        - name: price-api
-          exposure: internal
-          targetPort: 5000
-      cpuLimit: '250m'
-      memoryLimit: '256Mi'
+  # ---------------------------------------------------------------
+  # TODO — Task 6: Add the electricity price sidecar below this line
+  # See the lab guide in docs/index.md for the YAML to paste in.
+  # ---------------------------------------------------------------
 
 commands:
   - id: 1-install
