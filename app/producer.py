@@ -9,10 +9,7 @@ from confluent_kafka import Producer
 
 from .config import load_config
 
-ROOMS = [
-    "Kitchen", "Living Room", "Master Bedroom", "Bedroom 2",
-    "Home Office", "Garage", "Basement", "Garden",
-]
+ROOMS = ["Kitchen", "Bathroom", "Living Room", "Bedroom", "Garage"]
 
 CIRCUITS = [
     ("kitchen",       0.5,  4.0),

@@ -173,7 +173,7 @@
     /* ── Zone strip ── */
     .zone-strip { margin-bottom:.875rem; }
     .zone-lbl { font-size:.58rem; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; margin-bottom:.3rem; font-family:var(--mono); }
-    .zones { display:grid; grid-template-columns:repeat(8,1fr); gap:.4rem; }
+    .zones { display:grid; grid-template-columns:repeat(5,1fr); gap:.4rem; }
     .zc {
       background:var(--s1); border:1px solid var(--border); border-radius:6px;
       padding:.3rem .4rem; display:flex; flex-direction:column; align-items:center; gap:.15rem;
@@ -388,7 +388,7 @@
   </div>
 
 <script>
-  const ZONES = ["Kitchen","Living Room","Master Bedroom","Bedroom 2","Home Office","Garage","Basement","Garden"];
+  const ZONES = ["Kitchen","Bathroom","Living Room","Bedroom","Garage"];
   const TYPE_CFG = {
     kitchen:       { color:'#00a3e0', label:'Kitchen' },
     hvac:          { color:'#f7931e', label:'HVAC' },
