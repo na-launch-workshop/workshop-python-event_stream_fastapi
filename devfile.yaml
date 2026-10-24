@@ -2,7 +2,7 @@ schemaVersion: 2.3.0
 metadata:
   name: workshop-python-kafka
   version: 1.0.0
-  description: Kafka-powered event stream dashboard — wire up AMQ Streams and watch data flow
+  description: Grid operations dashboard — wire up sidecars and watch the data flow
 attributes:
   che-editor: vscode
 components:
@@ -11,7 +11,7 @@ components:
       image: image-registry.openshift-image-registry.svc:5000/workspace-images/udi-rhel9:latest
       endpoints:
         - exposure: public
-          name: event-dashboard
+          name: grid-dashboard
           protocol: https
           targetPort: 8080
           path: /
@@ -19,9 +19,9 @@ components:
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: localhost:9092
         - name: KAFKA_TOPIC
-          value: orders
+          value: meter-readings
         - name: KAFKA_GROUP_ID
-          value: event-stream-app
+          value: grid-dashboard
       cpuLimit: '2'
       cpuRequest: '500m'
       memoryLimit: '4Gi'
@@ -30,6 +30,16 @@ components:
 
   # ---------------------------------------------------------------
   # TODO — Task 1: Add the Kafka sidecar component below this line
+  # See the lab guide in docs/index.md for the YAML to paste in.
+  # ---------------------------------------------------------------
+
+  # ---------------------------------------------------------------
+  # TODO — Task 4: Add the datasette sidecar component below this line
+  # See the lab guide in docs/index.md for the YAML to paste in.
+  # ---------------------------------------------------------------
+
+  # ---------------------------------------------------------------
+  # TODO — Task 6: Add the electricity price sidecar below this line
   # See the lab guide in docs/index.md for the YAML to paste in.
   # ---------------------------------------------------------------
 
@@ -45,31 +55,37 @@ commands:
         isDefault: true
   - id: 2-create-topic
     exec:
-      label: "2. Create orders topic"
+      label: "2. Create meter-readings topic"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m app.create_topic"
-  - id: 3-test
+  - id: 3-seed-appliances
     exec:
-      label: "3. Run tests"
+      label: "3. Seed appliance database"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "python3.11 data/seed.py"
+  - id: 4-test
+    exec:
+      label: "4. Run tests"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m pytest"
       group:
         kind: test
         isDefault: true
-  - id: 4-start
+  - id: 5-start
     exec:
-      label: "4. Start event dashboard"
+      label: "5. Start grid dashboard"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
       group:
         kind: run
         isDefault: true
-  - id: 5-produce
+  - id: 6-produce
     exec:
-      label: "5. Start order producer"
+      label: "6. Start meter reading producer"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m app.producer"

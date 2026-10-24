@@ -1,4 +1,5 @@
 data/customers.db
+data/appliances.db
 __pycache__/
 *.pyc
 .venv/

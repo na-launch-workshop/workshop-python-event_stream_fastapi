@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Event Stream</title>
+  <title>GridWatch — Operations Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #0d0d1a;
-      --surface: #111124;
-      --border:  #1e1e40;
-      --accent:  #ee0000;
-      --live:    #00e676;
-      --text:    #dde0f0;
-      --muted:   #55556a;
+      --bg:       #07090f;
+      --surface:  #0e1320;
+      --border:   #1a2440;
+      --accent:   #00a3e0;
+      --live:     #00e676;
+      --peak:     #ff6b35;
+      --midpeak:  #f7931e;
+      --offpeak:  #00a3e0;
+      --text:     #d8e4f0;
+      --muted:    #4a6080;
     }
 
     body {
@@ -22,7 +25,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 1.5rem 2rem;
+      padding: 1.25rem 1.75rem;
     }
 
     /* ── Header ────────────────────────────────── */
@@ -30,68 +33,80 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.875rem;
       border-bottom: 1px solid var(--border);
     }
     .header-left { display: flex; align-items: center; gap: 0.75rem; }
     header h1 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 800;
-      background: linear-gradient(120deg, #fff 30%, #999);
+      background: linear-gradient(120deg, #fff 30%, #6ab0d4);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .badge {
-      color: #fff;
       font-size: 0.6rem;
       font-weight: 700;
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
       letter-spacing: 0.1em;
+      color: #fff;
     }
-    .badge.kafka  { background: var(--accent); }
-    .badge.sqlite { background: #0ea5a0; }
+    .badge.kafka    { background: #ee0000; }
+    .badge.sqlite   { background: #0ea5a0; }
+    .badge.price    { background: #8b5cf6; }
 
-    .status-pill {
+    /* ── Price ticker ──────────────────────────── */
+    .price-ticker {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 1rem;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 0.35rem 0.85rem;
-      font-size: 0.78rem;
+      border-radius: 10px;
+      padding: 0.6rem 1.25rem;
+    }
+    .price-ticker .tier-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--muted);
+      color: #fff;
+    }
+    .price-ticker .tier-label.peak    { background: var(--peak); }
+    .price-ticker .tier-label.mid-peak{ background: var(--midpeak); }
+    .price-ticker .tier-label.off-peak{ background: var(--offpeak); }
+    .price-ticker .price-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .price-ticker .price-unit {
+      font-size: 0.75rem;
       color: var(--muted);
     }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
-      flex-shrink: 0;
-    }
-    .dot.live {
-      background: var(--live);
-      animation: pulse 1.6s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,230,118,.5); }
-      50%       { box-shadow: 0 0 0 7px rgba(0,230,118,0); }
+    .price-ticker .no-price {
+      font-size: 0.8rem;
+      color: var(--muted);
     }
 
     /* ── Stat cards ────────────────────────────── */
     .stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.25rem;
+      gap: 0.875rem;
+      margin-bottom: 1.1rem;
     }
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 1rem 1.25rem;
+      padding: 0.875rem 1.1rem;
       position: relative;
       overflow: hidden;
     }
@@ -103,64 +118,78 @@
       background: linear-gradient(90deg, var(--accent), transparent);
     }
     .stat-card .label {
-      font-size: 0.68rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 0.5rem;
-    }
-    .stat-card .value {
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-      transition: transform 0.15s ease;
-    }
-    .stat-card .value.string-val {
-      font-size: 1rem;
-      margin-top: 0.4rem;
-      color: var(--text);
-    }
-    .stat-card .value.bump { transform: scale(1.18); }
-
-    /* ── Sparkline ─────────────────────────────── */
-    .spark-wrap { margin-bottom: 1.25rem; }
-    .spark-label {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 0.4rem;
     }
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      transition: transform 0.15s ease;
+    }
+    .stat-card .value.string-val { font-size: 0.95rem; margin-top: 0.35rem; color: var(--text); }
+    .stat-card .value.bump { transform: scale(1.15); }
+
+    /* ── Sparkline ─────────────────────────────── */
+    .spark-wrap { margin-bottom: 1.1rem; }
+    .spark-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.35rem;
+    }
     .sparkline {
       display: flex;
       align-items: flex-end;
       gap: 3px;
-      height: 52px;
+      height: 44px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 6px 10px;
     }
     .spark-bar {
       flex: 1;
       background: var(--accent);
       border-radius: 2px 2px 0 0;
       min-height: 2px;
-      opacity: 0.55;
-      transition: height 0.3s ease, opacity 0.3s;
+      opacity: 0.5;
+      transition: height 0.3s ease;
     }
     .spark-bar.active { opacity: 1; }
 
     /* ── Main layout ───────────────────────────── */
     .main-layout {
       display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 1rem;
+      grid-template-columns: 1fr 260px;
+      gap: 0.875rem;
       align-items: start;
     }
 
-    /* ── Events table ──────────────────────────── */
+    /* ── Status pill ───────────────────────────── */
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .dot.live {
+      background: var(--live);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(0,230,118,0); }
+    }
+
+    /* ── Readings table ────────────────────────── */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -170,136 +199,134 @@
       overflow: hidden;
     }
     th {
-      background: #09091a;
+      background: #070c18;
       text-align: left;
-      padding: 0.6rem 1rem;
-      font-size: 0.68rem;
+      padding: 0.55rem 0.875rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--muted);
       font-weight: 600;
     }
-    td {
-      padding: 0.55rem 1rem;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.875rem;
-    }
+    td { padding: 0.5rem 0.875rem; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
     tr:last-child td { border-bottom: none; }
     tr.new-row { animation: slide-in 0.35s ease-out; }
     @keyframes slide-in {
-      from { opacity: 0; transform: translateX(-10px); }
+      from { opacity: 0; transform: translateX(-8px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-
-    .customer-cell { display: flex; align-items: center; gap: 0.5rem; }
-    .avatar {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+    .meter-id { font-family: monospace; font-size: 0.78rem; color: var(--muted); }
+    .type-chip {
       font-size: 0.62rem;
-      font-weight: 800;
-      color: #fff;
-      flex-shrink: 0;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
-    .order-id { font-family: monospace; font-size: 0.8rem; color: var(--muted); }
-    .qty-pips { display: flex; gap: 3px; align-items: center; }
-    .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0.6; }
-    .qty-num { margin-left: 5px; font-size: 0.8rem; color: var(--muted); }
+    .type-chip.residential { background: rgba(0,163,224,0.15); color: var(--accent); }
+    .type-chip.commercial  { background: rgba(247,147,30,0.15); color: var(--midpeak); }
+    .type-chip.industrial  { background: rgba(255,107,53,0.15); color: var(--peak); }
+    .kwh-val { font-weight: 700; }
+    .cost-val { color: var(--live); font-size: 0.78rem; }
 
-    .empty { text-align: center; padding: 4rem 0; color: var(--muted); }
-    .empty p { font-size: 1rem; margin-bottom: 0.4rem; }
-    .empty small { font-size: 0.78rem; opacity: 0.55; }
+    .empty { text-align: center; padding: 3rem 0; color: var(--muted); }
+    .empty p { font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .empty small { font-size: 0.75rem; opacity: 0.55; }
 
-    /* ── Customers panel ───────────────────────── */
-    .customers-panel {
+    /* ── Appliances panel ──────────────────────── */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+    .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
     }
     .panel-header {
-      background: #09091a;
-      padding: 0.6rem 1rem;
+      background: #070c18;
+      padding: 0.55rem 0.875rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
       border-bottom: 1px solid var(--border);
     }
     .panel-header span {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--muted);
       font-weight: 600;
       flex: 1;
     }
-    .customer-cards { padding: 0.5rem; }
-    .customer-card {
+    .appliance-list { padding: 0.4rem; }
+    .appliance-row {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.5rem 0.6rem;
-      border-radius: 6px;
-      margin-bottom: 0.25rem;
-      transition: background 0.3s;
+      justify-content: space-between;
+      padding: 0.45rem 0.5rem;
+      border-radius: 5px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
     }
-    .customer-card:last-child { margin-bottom: 0; }
-    .customer-card.active { background: rgba(255,255,255,0.05); }
-    .customer-card.ping { animation: card-ping 0.5s ease-out; }
-    @keyframes card-ping {
-      0%   { background: rgba(238,0,0,0.2); }
-      100% { background: rgba(255,255,255,0.05); }
-    }
-    .card-info { flex: 1; min-width: 0; }
-    .card-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-dept { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-loc  { font-size: 0.68rem; color: var(--muted); opacity: 0.6; }
+    .appliance-row:last-child { border-bottom: none; }
+    .appliance-name { flex: 1; }
+    .appliance-kwh { font-size: 0.72rem; color: var(--muted); margin: 0 0.5rem; }
+    .appliance-cost { color: var(--live); font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
 
     .panel-empty {
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem;
       text-align: center;
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       line-height: 1.5;
     }
-    .panel-empty .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
 
   <header>
     <div class="header-left">
-      <h1>Order Event Stream</h1>
-      <span class="badge kafka">AMQ STREAMS</span>
-      <span class="badge sqlite" id="sqlite-badge" style="display:none">DATASETTE</span>
+      <h1>GridWatch</h1>
+      <span class="badge kafka"  id="badge-kafka"  style="display:none">AMQ STREAMS</span>
+      <span class="badge sqlite" id="badge-sqlite" style="display:none">DATASETTE</span>
+      <span class="badge price"  id="badge-price"  style="display:none">LIVE PRICING</span>
     </div>
-    <div class="status-pill">
-      <div class="dot" id="dot"></div>
-      <span id="status-text">Waiting for Kafka…</span>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div class="price-ticker" id="price-ticker">
+        <span class="no-price">Add the price sidecar to see live rates</span>
+      </div>
+      <div class="status-pill">
+        <div class="dot" id="dot"></div>
+        <span id="status-text">Waiting for meter readings…</span>
+      </div>
     </div>
   </header>
 
   <div class="stats">
     <div class="stat-card">
-      <div class="label">Total Events</div>
+      <div class="label">Total Readings</div>
       <div class="value" id="count">0</div>
     </div>
     <div class="stat-card">
-      <div class="label">Events / min</div>
+      <div class="label">Readings / min</div>
       <div class="value" id="rate">—</div>
     </div>
     <div class="stat-card">
-      <div class="label">Unique Customers</div>
-      <div class="value" id="customers-count">0</div>
+      <div class="label">Avg kWh / Reading</div>
+      <div class="value" id="avg-kwh">—</div>
     </div>
     <div class="stat-card">
-      <div class="label">Top Item</div>
-      <div class="value string-val" id="top-item">—</div>
+      <div class="label">Est. Cost Today</div>
+      <div class="value string-val" id="est-cost">—</div>
     </div>
   </div>
 
   <div class="spark-wrap">
-    <div class="spark-label">Activity — last 60 seconds</div>
+    <div class="spark-label">Reading activity — last 60 seconds</div>
     <div class="sparkline" id="sparkline"></div>
   </div>
 
@@ -307,46 +334,38 @@
     <table>
       <thead>
         <tr>
-          <th>Order ID</th>
-          <th>Customer</th>
-          <th>Item</th>
-          <th>Qty</th>
+          <th>Meter ID</th>
+          <th>Zone</th>
+          <th>Type</th>
+          <th>kWh</th>
+          <th>Cost</th>
           <th>Time</th>
         </tr>
       </thead>
       <tbody id="tbody">
         <tr>
-          <td colspan="5" class="empty">
-            <p>No events yet.</p>
+          <td colspan="6" class="empty">
+            <p>No readings yet.</p>
             <small>Complete the lab tasks to start the stream.</small>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <div class="customers-panel">
-      <div class="panel-header">
-        <span>Customers</span>
-      </div>
-      <div id="customer-cards" class="customer-cards">
-        <div class="panel-empty">
-          <div class="icon">🗄️</div>
-          Add the datasette sidecar and seed the database to see customer profiles here.
+    <div class="side-panel">
+      <div class="panel" id="appliances-panel">
+        <div class="panel-header">
+          <span>Appliance Reference</span>
+        </div>
+        <div id="appliance-list">
+          <div class="panel-empty">Add the datasette sidecar and seed the database to see appliance costs.</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const PALETTE = ['#e94560','#0ea5a0','#f7931e','#8b5cf6','#10b981','#3b82f6','#ec4899','#f59e0b'];
-    const customerColors = {};
-    let colorCursor = 0;
-    function colorFor(name) {
-      if (!customerColors[name]) customerColors[name] = PALETTE[colorCursor++ % PALETTE.length];
-      return customerColors[name];
-    }
-
-    // Sparkline — 30 × 2 s buckets = 60 s window
+    // Sparkline
     const N = 30, BKT = 2000;
     const buckets = new Array(N).fill(0);
     const t0 = Date.now();
@@ -364,11 +383,11 @@
 
     // State
     const seen = new Set();
-    const customerSet = new Set();
-    const itemTally = {};
     const eventTs = [];
     let total = 0;
-    let customerProfiles = {};
+    let totalKwh = 0;
+    let totalCost = 0;
+    let currentPrice = null;
 
     function eventsPerMin() {
       const cutoff = Date.now() - 60000;
@@ -384,40 +403,61 @@
       setTimeout(() => el.classList.remove('bump'), 200);
     }
 
-    function pingCustomerCard(name) {
-      const card = document.querySelector(`[data-customer="${name}"]`);
-      if (!card) return;
-      card.classList.remove('ping');
-      void card.offsetWidth;
-      card.classList.add('ping');
-    }
+    function fmt(n) { return n.toFixed(4); }
+    function fmtCost(n) { return `$${n.toFixed(3)}`; }
 
-    async function pollCustomers() {
+    // Price sidecar
+    async function pollPrice() {
       try {
-        const res = await fetch('/api/customers', { cache: 'no-store' });
+        const res = await fetch('/api/price', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
-        if (!data.length) return;
+        if (!data) return;
 
-        document.getElementById('sqlite-badge').style.display = '';
-        customerProfiles = {};
-        data.forEach(c => { customerProfiles[c.name] = c; });
+        currentPrice = data.price;
+        document.getElementById('badge-price').style.display = '';
 
-        const container = document.getElementById('customer-cards');
-        container.innerHTML = data.map(c => {
-          const color = colorFor(c.name);
-          return `<div class="customer-card" data-customer="${c.name}">
-            <div class="avatar" style="background:${color}">${c.name.slice(0,2).toUpperCase()}</div>
-            <div class="card-info">
-              <div class="card-name">${c.name}</div>
-              <div class="card-dept">${c.role} · ${c.department}</div>
-              <div class="card-loc">${c.location}</div>
-            </div>
-          </div>`;
-        }).join('');
+        const tier = data.tier;
+        const cls = tier.toLowerCase().replace(' ', '-');
+        document.getElementById('price-ticker').innerHTML = `
+          <span class="tier-label ${cls}">${tier}</span>
+          <span class="price-val">$${data.price.toFixed(4)}</span>
+          <span class="price-unit">/ kWh</span>
+        `;
+
+        // Refresh appliance costs
+        renderAppliances();
       } catch(_) {}
     }
 
+    // Appliances
+    let applianceData = [];
+    async function pollAppliances() {
+      try {
+        const res = await fetch('/api/appliances', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.length) return;
+        applianceData = data;
+        document.getElementById('badge-sqlite').style.display = '';
+        renderAppliances();
+      } catch(_) {}
+    }
+
+    function renderAppliances() {
+      if (!applianceData.length) return;
+      const list = document.getElementById('appliance-list');
+      list.innerHTML = '<div class="appliance-list">' + applianceData.map(a => {
+        const dailyCost = currentPrice ? fmtCost(a.daily_kwh * currentPrice) : '—';
+        return `<div class="appliance-row">
+          <span class="appliance-name">${a.name}</span>
+          <span class="appliance-kwh">${a.daily_kwh} kWh/d</span>
+          <span class="appliance-cost">${dailyCost}</span>
+        </div>`;
+      }).join('') + '</div>';
+    }
+
+    // Meter readings
     async function pollEvents() {
       try {
         const res = await fetch('/api/events', { cache: 'no-store' });
@@ -426,34 +466,33 @@
         if (!data.length) return;
 
         document.getElementById('dot').classList.add('live');
-        document.getElementById('status-text').textContent = 'Live — receiving events from Kafka';
+        document.getElementById('status-text').textContent = 'Live — receiving meter readings';
+        document.getElementById('badge-kafka').style.display = '';
 
         const tbody = document.getElementById('tbody');
         let added = false, html = '';
 
         for (const e of data) {
-          if (seen.has(e.id)) continue;
-          seen.add(e.id);
+          const key = `${e.meter_id}-${e.timestamp}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
           total++;
           added = true;
           eventTs.push(Date.now());
-          customerSet.add(e.customer);
-          itemTally[e.item] = (itemTally[e.item] || 0) + 1;
           buckets[bucketIdx()]++;
-          pingCustomerCard(e.customer);
+          totalKwh += e.kwh;
 
-          const color = colorFor(e.customer);
+          const cost = currentPrice ? e.kwh * currentPrice : null;
+          if (cost) totalCost += cost;
+
           const ts = new Date(e.timestamp).toLocaleTimeString();
-          const pips = Array(e.quantity).fill('<div class="pip"></div>').join('');
           html += `<tr class="new-row">
-            <td><span class="order-id">${e.id}</span></td>
-            <td><div class="customer-cell">
-              <div class="avatar" style="background:${color}">${e.customer.slice(0,2).toUpperCase()}</div>
-              ${e.customer}
-            </div></td>
-            <td>${e.item}</td>
-            <td><div class="qty-pips">${pips}<span class="qty-num">${e.quantity}</span></div></td>
-            <td style="color:var(--muted);font-size:.8rem">${ts}</td>
+            <td><span class="meter-id">${e.meter_id}</span></td>
+            <td>${e.zone}</td>
+            <td><span class="type-chip ${e.type}">${e.type}</span></td>
+            <td><span class="kwh-val">${e.kwh}</span></td>
+            <td><span class="cost-val">${cost ? fmtCost(cost) : '—'}</span></td>
+            <td style="color:var(--muted);font-size:.76rem">${ts}</td>
           </tr>`;
         }
 
@@ -461,9 +500,8 @@
           if (tbody.querySelector('.empty')) tbody.innerHTML = '';
           tbody.innerHTML = html + tbody.innerHTML;
           document.getElementById('count').textContent = total; bump('count');
-          document.getElementById('customers-count').textContent = customerSet.size;
-          const top = Object.entries(itemTally).sort((a,b) => b[1]-a[1])[0];
-          document.getElementById('top-item').textContent = top ? top[0] : '—';
+          document.getElementById('avg-kwh').textContent = (totalKwh / total).toFixed(2);
+          document.getElementById('est-cost').textContent = totalCost > 0 ? `$${totalCost.toFixed(2)}` : '—';
         }
 
         document.getElementById('rate').textContent = eventsPerMin();
@@ -471,9 +509,11 @@
     }
 
     pollEvents();
-    pollCustomers();
+    pollPrice();
+    pollAppliances();
     setInterval(pollEvents, 2000);
-    setInterval(pollCustomers, 2000);
+    setInterval(pollPrice, 10000);
+    setInterval(pollAppliances, 5000);
     setInterval(() => { document.getElementById('rate').textContent = eventsPerMin(); }, 5000);
   </script>
 
