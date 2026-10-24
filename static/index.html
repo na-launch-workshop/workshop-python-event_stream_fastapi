@@ -55,8 +55,8 @@
       border-bottom: 1px solid var(--border);
     }
     .rh-logo { display:flex; align-items:center; gap:.45rem; flex-shrink:0; }
-    .rh-logo svg { width:30px; height:30px; }
-    .rh-word { font-size:.72rem; font-weight:800; color:var(--rh); letter-spacing:.06em; }
+    .rh-logo svg { width:44px; height:44px; }
+    .rh-word { font-size:.9rem; font-weight:800; color:var(--rh); letter-spacing:.06em; }
     .hdivider { width:1px; height:28px; background:var(--border); }
     .app-title { flex:1; }
     .app-title h1 {
@@ -245,11 +245,15 @@
   <!-- Header -->
   <header>
     <div class="rh-logo">
-      <svg viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg" fill="none">
-        <path d="M20 3C12 3 6 8 4 13L36 13C34 8 28 3 20 3Z" fill="#ee0000"/>
-        <rect x="2" y="13" width="36" height="5" rx="2.5" fill="#ee0000"/>
-        <path d="M6 18Q20 14 34 18L32 24Q20 20 8 24Z" fill="#cc0000"/>
-        <path d="M10 24Q20 21 30 24L29 28Q20 25 11 28Z" fill="#aa0000"/>
+      <svg viewBox="0 0 60 48" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- Crown -->
+        <path d="M12 26 Q12 6 30 6 Q48 6 48 26" fill="#ee0000"/>
+        <!-- Hat band -->
+        <rect x="10" y="24" width="40" height="6" rx="1" fill="#cc0000"/>
+        <!-- Brim -->
+        <ellipse cx="30" cy="34" rx="26" ry="7" fill="#ee0000"/>
+        <!-- Brim underside shading -->
+        <ellipse cx="30" cy="36" rx="22" ry="5" fill="#cc0000"/>
       </svg>
       <div class="rh-word">Red Hat</div>
     </div>
