@@ -116,9 +116,13 @@ Open `devfile.yaml` and paste in the following component under the second `TODO`
 
 ## Task 5 — Seed and explore the appliance database
 
-Run **"3. Seed appliance database"** — this creates `data/appliances.db` with 10 appliances.
+Open a terminal and run:
 
-Open the `datasette` endpoint in a browser tab to explore the data.
+```bash
+python3.11 data/seed.py
+```
+
+This creates `data/appliances.db` with 10 appliances. Open the `datasette` endpoint in a browser tab to explore the data.
 
 Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explorer`):
 - Open `data/appliances.db` in the editor

@@ -95,33 +95,18 @@ commands:
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m app.create_topic"
-  - id: 3-seed-appliances
+  - id: 3-start
     exec:
-      label: "3. Seed appliance database"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: "python3.11 data/seed.py"
-  - id: 4-test
-    exec:
-      label: "4. Run tests"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: "python3.11 -m pytest"
-      group:
-        kind: test
-        isDefault: true
-  - id: 5-start
-    exec:
-      label: "5. Start grid dashboard"
+      label: "3. Start HomeGrid dashboard"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
       group:
         kind: run
         isDefault: true
-  - id: 6-produce
+  - id: 5-produce
     exec:
-      label: "6. Start meter reading producer"
+      label: "4. Start meter reading producer"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m app.producer"
