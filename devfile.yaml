@@ -83,22 +83,9 @@ commands:
       group:
         kind: run
         isDefault: true
-  - id: 6-build-price-api
+  - id: 6-produce
     exec:
-      label: "6. Build price API image"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: |
-        oc apply -f k8s/price-api-build.yaml &&
-        oc start-build electricity-price-api --from-dir=sidecar/ --follow &&
-        echo "" &&
-        echo "============================================" &&
-        echo "Add this image to your devfile sidecar:" &&
-        echo "image-registry.openshift-image-registry.svc:5000/$(oc project -q)/electricity-price-api:latest" &&
-        echo "============================================"
-  - id: 7-produce
-    exec:
-      label: "7. Start meter reading producer"
+      label: "6. Start meter reading producer"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m app.producer"

@@ -127,29 +127,16 @@ Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explo
 
 ---
 
-## Task 6 — Build and sidecar the electricity price API
+## Task 6 — Add the electricity price sidecar
 
-Open `sidecar/price_api.py` — this is the API you're going to build and deploy. It returns the current electricity rate based on time of day (off-peak, mid-peak, peak). Feel free to tweak the rates.
+Open `sidecar/price_api.py` and take a look — this is the API powering the price ticker. It returns the current electricity rate based on time of day (off-peak / mid-peak / peak).
 
-Run **"6. Build price API image"** from the command palette. This will:
-- Create an ImageStream and BuildConfig in your namespace
-- Build the container image from `sidecar/`
-- Print your personal image reference when complete
-
-The output will look like:
-```
-============================================
-Add this image to your devfile sidecar:
-image-registry.openshift-image-registry.svc:5000/user1-devspaces/electricity-price-api:latest
-============================================
-```
-
-Copy that image reference. Open `devfile.yaml` and paste the following under the third `TODO` comment, replacing `<your-image>` with the printed value:
+Open `devfile.yaml` and paste the following under the third `TODO` comment:
 
 ```yaml
   - name: price-api
     container:
-      image: <your-image>
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
       endpoints:
         - name: price-api
           exposure: internal
