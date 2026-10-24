@@ -89,22 +89,22 @@ commands:
       group:
         kind: build
         isDefault: true
-  - id: 2-create-topic
+  - id: 2-start
     exec:
-      label: "2. Create meter-readings topic"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: "python3.11 -m app.create_topic"
-  - id: 3-start
-    exec:
-      label: "3. Start HomeGrid dashboard"
+      label: "2. Start HomeGrid dashboard"
       component: tools
       workingDir: ${PROJECT_SOURCE}
       commandLine: "python3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
       group:
         kind: run
         isDefault: true
-  - id: 5-produce
+  - id: 3-create-topic
+    exec:
+      label: "3. Create meter-readings topic"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "python3.11 -m app.create_topic"
+  - id: 4-produce
     exec:
       label: "4. Start meter reading producer"
       component: tools
