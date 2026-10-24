@@ -1,0 +1,24 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: electricity-price-api
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: electricity-price-api
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/na-launch-workshop/workshop-python-kafka.git
+      ref: main
+    contextDir: sidecar
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: electricity-price-api:latest

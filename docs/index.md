@@ -127,14 +127,29 @@ Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explo
 
 ---
 
-## Task 6 — Add the electricity price sidecar
+## Task 6 — Build and sidecar the electricity price API
 
-Open `devfile.yaml` and paste in the following component under the third `TODO` comment:
+Open `sidecar/price_api.py` — this is the API you're going to build and deploy. It returns the current electricity rate based on time of day (off-peak, mid-peak, peak). Feel free to tweak the rates.
+
+Run **"6. Build price API image"** from the command palette. This will:
+- Create an ImageStream and BuildConfig in your namespace
+- Build the container image from `sidecar/`
+- Print your personal image reference when complete
+
+The output will look like:
+```
+============================================
+Add this image to your devfile sidecar:
+image-registry.openshift-image-registry.svc:5000/user1-devspaces/electricity-price-api:latest
+============================================
+```
+
+Copy that image reference. Open `devfile.yaml` and paste the following under the third `TODO` comment, replacing `<your-image>` with the printed value:
 
 ```yaml
   - name: price-api
     container:
-      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
+      image: <your-image>
       endpoints:
         - name: price-api
           exposure: internal
@@ -145,7 +160,7 @@ Open `devfile.yaml` and paste in the following component under the third `TODO` 
 
 **Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
 
-The price ticker in the header shows the current rate (off-peak / mid-peak / peak based on time of day). Appliance daily costs update automatically. Meter reading costs appear in the feed.
+The price ticker in the header shows the current rate. Appliance daily costs and meter reading costs update automatically.
 
 ---
 
