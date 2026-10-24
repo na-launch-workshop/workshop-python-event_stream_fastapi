@@ -1,14 +1,14 @@
-# Module: Event Stream Dashboard with AMQ Streams
+# Module: GridWatch — Grid Operations Dashboard
 
-**Technology Stack:** Python · FastAPI · Apache Kafka (AMQ Streams) · datasette · SQLite
+**Technology Stack:** Python · FastAPI · Apache Kafka (AMQ Streams) · datasette · SQLite · Electricity Price API
 
 ---
 
 ## Scenario
 
-You've been handed a live order dashboard. Open it now — it's running, but completely empty. No data flows in because the app has no Kafka broker to connect to.
+You've been given a live grid operations dashboard for an electricity company. It's running, but all three panels are empty — no meter readings, no appliance data, no pricing.
 
-Your job: wire up the broker, create the topic, and start the producer. If you do it right, the dashboard fills itself.
+Your job: add three sidecars to the workspace, one at a time. Each one wires up a data source. When all three are running, the dashboard tells a complete story.
 
 ---
 
@@ -16,7 +16,7 @@ Your job: wire up the broker, create the topic, and start the producer. If you d
 
 - OpenShift Dev Spaces workspace open with this repository
 - Run **"1. Install dependencies"** from the Dev Spaces command palette before starting
-- After any workspace restart (e.g. after Task 1), re-run **"1. Install dependencies"** before continuing
+- After any workspace restart, re-run **"1. Install dependencies"** before continuing
 
 ---
 
@@ -24,19 +24,18 @@ Your job: wire up the broker, create the topic, and start the producer. If you d
 
 | File | Role |
 |------|------|
-| `app/main.py` | FastAPI app — serves the dashboard, `/api/events`, and `/api/customers` |
-| `app/consumer.py` | Background thread — polls Kafka and feeds events into the dashboard |
-| `app/producer.py` | Standalone script — generates fake orders and publishes them |
-| `data/customers.db` | SQLite database — customer profiles served via datasette |
-| `devfile.yaml` | Workspace definition — **you'll edit this in Tasks 1 and 4** |
-
-The consumer is already running. It retries every 5 seconds until it can reach a broker. As soon as the broker and topic exist, it connects automatically.
+| `app/main.py` | FastAPI app — serves the dashboard, `/api/events`, `/api/appliances`, `/api/price` |
+| `app/consumer.py` | Background thread — polls Kafka for meter readings |
+| `app/producer.py` | Standalone script — generates fake meter readings |
+| `data/seed.py` | Seeds `appliances.db` with reference data |
+| `sidecar/` | Source for the electricity price API container image |
+| `devfile.yaml` | Workspace definition — **you edit this in Tasks 1, 4, and 6** |
 
 ---
 
-## Task 1 — Add the Kafka sidecar to `devfile.yaml`
+## Task 1 — Add the Kafka sidecar
 
-Open `devfile.yaml`. Find the `TODO` comment under the `components:` section and paste in the following component:
+Open `devfile.yaml` and paste in the following component under the first `TODO` comment:
 
 ```yaml
   - name: kafka
@@ -69,58 +68,31 @@ Open `devfile.yaml`. Find the `TODO` comment under the `components:` section and
       memoryLimit: '1Gi'
 ```
 
-**Save the file, then restart your Dev Spaces workspace** so the new container starts.
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
 
 ---
 
 ## Task 2 — Create the Kafka topic
 
-Once the workspace restarts, run command **"2. Create orders topic"** from the Dev Spaces command palette.
-
-You should see:
+Run **"2. Create meter-readings topic"** from the command palette.
 
 ```
-Topic 'orders' created on localhost:9092
+Topic 'meter-readings' created on localhost:9092
 ```
 
 ---
 
-## Task 3 — Start the producer and watch the dashboard
+## Task 3 — Start the producer and watch meter readings flow
 
-Run command **"5. Start order producer"** from the Dev Spaces command palette, or run directly:
+Run **"5. Start grid dashboard"** and open the `grid-dashboard` endpoint.
 
-```bash
-python -m app.producer
-```
-
-Open the **`event-dashboard`** endpoint from the Dev Spaces Endpoints view.
-
-The dashboard should immediately start filling with incoming orders.
+Run **"6. Start meter reading producer"** — the Live Readings panel fills with live data.
 
 ---
 
-## Stretch goal
+## Task 4 — Add the datasette sidecar
 
-Stop the producer (`Ctrl+C`). Open a second terminal in the `kafka` container and run a consumer group check:
-
-```bash
-/opt/kafka/bin/kafka-consumer-groups.sh \
-  --bootstrap-server localhost:9092 \
-  --describe \
-  --group event-stream-app
-```
-
-Notice the **LAG** column. Restart the producer and watch the lag drop to zero as the consumer catches up.
-
-> In the next session we'll use KEDA to automatically scale a consumer deployment based on this lag.
-
----
-
-## Task 4 — Add the datasette sidecar to `devfile.yaml`
-
-The dashboard has a **Customers** panel that enriches order events with profile data. It polls `localhost:8001` — but datasette isn't running yet.
-
-Open `devfile.yaml` and paste in the following component alongside the kafka sidecar:
+Open `devfile.yaml` and paste in the following component under the second `TODO` comment:
 
 ```yaml
   - name: datasette
@@ -136,31 +108,58 @@ Open `devfile.yaml` and paste in the following component alongside the kafka sid
       mountSources: true
 ```
 
-> `mountSources: true` gives datasette access to the project volume so it can read `data/customers.db`. The dashboard reads directly from SQLite — datasette is your browser-based DB explorer.
+> `mountSources: true` gives datasette access to the project volume. The dashboard reads directly from SQLite — datasette is your browser-based DB explorer.
 
-**Save and restart the workspace**, then re-run **"1. Install dependencies"**.
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
 
 ---
 
-## Task 5 — Add customer data
+## Task 5 — Seed and explore the appliance database
 
-The SQLite database is at `data/customers.db`. The SQLite extension is already installed in your editor.
+Run **"3. Seed appliance database"** — this creates `data/appliances.db` with 10 appliances.
 
-1. In the VS Code Explorer, right-click `data/customers.db` and select **Open Database**
-2. Expand the **SQLITE EXPLORER** panel in the sidebar
-3. Click the ▶ icon next to `customers` to open a query window
-4. Insert some rows:
+Open the `datasette` endpoint in a browser tab to explore the data.
 
-```sql
-INSERT INTO customers (name, department, role, location) VALUES
-  ('Alice', 'Engineering', 'Backend Developer', 'New York'),
-  ('Bob', 'Product', 'Product Manager', 'Chicago'),
-  ('Carlos', 'Engineering', 'DevOps Engineer', 'Austin'),
-  ('Dana', 'Design', 'UX Designer', 'Seattle'),
-  ('Eve', 'Engineering', 'Frontend Developer', 'Boston'),
-  ('Frank', 'Sales', 'Account Executive', 'Denver'),
-  ('Grace', 'Engineering', 'Data Engineer', 'San Francisco'),
-  ('Hiro', 'Product', 'Product Analyst', 'Los Angeles');
+Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explorer`):
+- Open `data/appliances.db` in the editor
+- Add rows for any appliances you want to track
+- The Appliance Reference panel updates within 2 seconds
+
+---
+
+## Task 6 — Add the electricity price sidecar
+
+Open `devfile.yaml` and paste in the following component under the third `TODO` comment:
+
+```yaml
+  - name: price-api
+    container:
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
+      endpoints:
+        - name: price-api
+          exposure: internal
+          targetPort: 5000
+      cpuLimit: '250m'
+      memoryLimit: '256Mi'
 ```
 
-5. Run the query — the Customers panel on the dashboard will populate on the next poll.
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
+
+The price ticker in the header shows the current rate (off-peak / mid-peak / peak based on time of day). Appliance daily costs update automatically. Meter reading costs appear in the feed.
+
+---
+
+## Stretch goal
+
+Stop the producer. Check consumer lag:
+
+```bash
+/opt/kafka/bin/kafka-consumer-groups.sh \
+  --bootstrap-server localhost:9092 \
+  --describe \
+  --group grid-dashboard
+```
+
+Notice the **LAG** column. Restart the producer — watch it drop to zero.
+
+> In the next session we'll use KEDA to automatically scale the consumer based on this lag.
