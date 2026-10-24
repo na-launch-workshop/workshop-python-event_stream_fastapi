@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-import httpx
+import sqlite3
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -10,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import load_config
 from .consumer import events, start_consumer
 
-DATASETTE_URL = "http://localhost:8001/customers/customers.json?_shape=array&_ttl=0"
+DB_PATH = Path(__file__).parent.parent / "data" / "customers.db"
 
 
 @asynccontextmanager
@@ -35,9 +37,12 @@ def create_app() -> FastAPI:
     @application.get("/api/customers")
     def get_customers():
         try:
-            response = httpx.get(DATASETTE_URL, timeout=2.0)
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("SELECT name, department, role, location FROM customers").fetchall()
+            conn.close()
             return JSONResponse(
-                content=response.json(),
+                content=[dict(r) for r in rows],
                 headers={"Cache-Control": "no-store"},
             )
         except Exception:
