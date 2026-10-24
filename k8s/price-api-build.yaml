@@ -9,11 +9,7 @@ metadata:
   name: electricity-price-api
 spec:
   source:
-    type: Git
-    git:
-      uri: https://github.com/na-launch-workshop/workshop-python-kafka.git
-      ref: main
-    contextDir: sidecar
+    type: Binary
   strategy:
     type: Docker
     dockerStrategy:
