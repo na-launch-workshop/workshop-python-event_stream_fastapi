@@ -219,6 +219,7 @@
     .kval { font-family:var(--mono); font-weight:700; }
     .cval { font-family:var(--mono); color:var(--live); font-size:.74rem; }
     .tval { font-family:var(--mono); color:var(--muted); font-size:.68rem; }
+    .equiv { font-family:var(--mono); font-size:.64rem; color:#8b5cf6; white-space:nowrap; }
     .empty { text-align:center; padding:2.5rem 0; color:var(--muted); }
     .empty p { font-size:.88rem; margin-bottom:.25rem; }
     .empty small { font-size:.68rem; opacity:.5; font-family:var(--mono); }
@@ -371,10 +372,10 @@
       </div>
       <table>
         <thead><tr>
-          <th>Meter ID</th><th>Zone</th><th>Type</th><th>kWh</th><th>Cost</th><th>Time</th>
+          <th>Meter ID</th><th>Zone</th><th>Type</th><th>kWh</th><th>Cost</th><th>Equivalent</th><th>Time</th>
         </tr></thead>
         <tbody id="tbody">
-          <tr><td colspan="6" class="empty"><p>Awaiting meter readings…</p><small>Complete lab tasks to start the stream.</small></td></tr>
+          <tr><td colspan="7" class="empty"><p>Awaiting meter readings…</p><small>Complete lab tasks to start the stream.</small></td></tr>
         </tbody>
       </table>
     </div>
@@ -513,6 +514,19 @@
   }
   renderZones();
 
+  // Appliance equivalence — find closest appliance and show days it could power
+  function findEquiv(kwh){
+    if(!appData.length) return '—';
+    const best = appData.reduce((a,b) =>
+      Math.abs(a.daily_kwh - kwh) < Math.abs(b.daily_kwh - kwh) ? a : b
+    );
+    const days = kwh / best.daily_kwh;
+    const label = days >= 1
+      ? `${days.toFixed(1)}d ${best.name.split(' ')[0]}`
+      : `${(days * 24).toFixed(1)}h ${best.name.split(' ')[0]}`;
+    return label;
+  }
+
   function bump(id){
     const el=document.getElementById(id);
     el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
@@ -597,6 +611,7 @@
           <td><span class="chip ${e.type}">${e.type}</span></td>
           <td><span class="kval">${e.kwh}</span></td>
           <td><span class="cval">${cost?`$${cost.toFixed(4)}`:'—'}</span></td>
+          <td><span class="equiv">≈ ${findEquiv(e.kwh)}</span></td>
           <td class="tval">${ts}</td>
         </tr>`;
       }
