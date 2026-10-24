@@ -136,7 +136,7 @@ Open `devfile.yaml` and paste in the following component alongside the kafka sid
       mountSources: true
 ```
 
-> `mountSources: true` gives datasette access to the project volume so it can read `data/customers.db`.
+> `mountSources: true` gives datasette access to the project volume so it can read `data/customers.db`. The dashboard reads directly from SQLite — datasette is your browser-based DB explorer.
 
 **Save and restart the workspace**, then re-run **"1. Install dependencies"**.
 
