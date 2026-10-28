@@ -1,10 +1,19 @@
-# Module: GridWatch — Grid Operations Dashboard
+# 🚀 Module: Event Streaming with Apache Kafka - Python
 
-**Technology Stack:** Python · FastAPI · Apache Kafka (AMQ Streams) · datasette · SQLite · Electricity Price API
+HomeGrid — Home Energy Monitor
+
+**Technology Stack:**
+
+- Python
+- FastAPI
+- Apache Kafka
+- Datasette
+- SQLite
+- Electricity Price API
 
 ---
 
-## Scenario
+## 🎯 **Scenario**
 
 You've been given a live grid operations dashboard for an electricity company. It's running, but all three panels are empty — no meter readings, no appliance data, no pricing.
 
@@ -12,15 +21,15 @@ Your job: add three sidecars to the workspace, one at a time. Each one wires up 
 
 ---
 
-## Prerequisites
+## 📋 Prerequisites
 
 - OpenShift Dev Spaces workspace open with this repository
 - Run **"1. Install dependencies"** from the Dev Spaces command palette before starting
-- After any workspace restart, re-run **"1. Install dependencies"** before continuing
+- After any workspace restart, re-run **"1. Install dependencies"** before continuing — and once you have created the topic, re-run commands 2, 3 and 4 as well (see Task 4)
 
 ---
 
-## How the app works
+## 📚 How the app works
 
 | File | Role |
 |------|------|
@@ -33,7 +42,9 @@ Your job: add three sidecars to the workspace, one at a time. Each one wires up 
 
 ---
 
-## Task 1 — Add the Kafka sidecar
+## 🧩 **Challenge**
+
+### Task 1 — Add the Kafka sidecar
 
 Open `devfile.yaml` and paste in the following component under the first `TODO` comment:
 
@@ -72,25 +83,27 @@ Open `devfile.yaml` and paste in the following component under the first `TODO` 
 
 ---
 
-## Task 2 — Create the Kafka topic
+### Task 2 — Start the dashboard
 
-Run **"2. Create meter-readings topic"** from the command palette.
+Run **"2. Start HomeGrid dashboard"** and open the `grid-dashboard` endpoint.
+
+All three panels are empty — there is no topic to read from yet.
+
+---
+
+### Task 3 — Create the topic and watch meter readings flow
+
+Run **"3. Create meter-readings topic"** from the command palette.
 
 ```
 Topic 'meter-readings' created on localhost:9092
 ```
 
----
-
-## Task 3 — Start the producer and watch meter readings flow
-
-Run **"5. Start grid dashboard"** and open the `grid-dashboard` endpoint.
-
-Run **"6. Start meter reading producer"** — the Live Readings panel fills with live data.
+Run **"4. Start meter reading producer"** — the Live Readings panel fills with live data.
 
 ---
 
-## Task 4 — Add the datasette sidecar
+### Task 4 — Add the datasette sidecar
 
 Open `devfile.yaml` and paste in the following component under the second `TODO` comment:
 
@@ -102,19 +115,19 @@ Open `devfile.yaml` and paste in the following component under the second `TODO`
         - name: datasette
           exposure: internal
           targetPort: 8001
-      command: ["datasette", "serve", "/projects/workshop-python-kafka/data/", "--host", "0.0.0.0", "--port", "8001"]
+      command: ["sh", "-c", "datasette serve \"$PROJECT_SOURCE/data/\" --host 0.0.0.0 --port 8001"]
       cpuLimit: '500m'
       memoryLimit: '512Mi'
       mountSources: true
 ```
 
-> `mountSources: true` gives datasette access to the project volume. The dashboard reads directly from SQLite — datasette is your browser-based DB explorer.
+> `mountSources: true` gives datasette access to the project volume, and `$PROJECT_SOURCE` points at this repository inside it. The dashboard reads directly from SQLite — datasette is your browser-based DB explorer.
 
-**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**, then **"2. Start HomeGrid dashboard"**, **"3. Create meter-readings topic"** and **"4. Start meter reading producer"** — a restart stops everything that was running, and the Kafka sidecar does not keep its data, so the topic has to be created again.
 
 ---
 
-## Task 5 — Seed and explore the appliance database
+### Task 5 — Seed and explore the appliance database
 
 Open a terminal and run:
 
@@ -131,7 +144,7 @@ Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explo
 
 ---
 
-## Task 6 — Add the electricity price sidecar
+### Task 6 — Add the electricity price sidecar
 
 Open `sidecar/price_api.py` — take a look at how it works. It returns the current electricity rate based on time of day (off-peak / mid-peak / peak).
 
@@ -149,23 +162,26 @@ Open `devfile.yaml` and paste the following under the third `TODO` comment:
       memoryLimit: '256Mi'
 ```
 
-**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
+**Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**, then **"2. Start HomeGrid dashboard"**, **"3. Create meter-readings topic"** and **"4. Start meter reading producer"** — a restart stops everything that was running, and the Kafka sidecar does not keep its data, so the topic has to be created again.
 
 The price ticker in the header shows the current rate. Appliance daily costs and circuit reading costs update automatically.
 
 ---
 
-## Stretch goal
+### Stretch goal
 
-Stop the producer. Check consumer lag:
+Stop the dashboard — press `Ctrl+C` in the terminal running **"2. Start HomeGrid dashboard"** — and leave the producer running.
+
+Now check the consumer lag. The Kafka tools live in the `kafka` sidecar, not in your terminal's container, so run them there:
 
 ```bash
-/opt/kafka/bin/kafka-consumer-groups.sh \
+oc exec $(oc get pod -l controller.devfile.io/devworkspace_id=$DEVWORKSPACE_ID -o name) -c kafka -- \
+  /opt/kafka/bin/kafka-consumer-groups.sh \
   --bootstrap-server localhost:9092 \
   --describe \
   --group grid-dashboard
 ```
 
-Notice the **LAG** column. Restart the producer — watch it drop to zero.
+Run it a few times and watch the **LAG** column grow — the producer keeps writing a reading every two seconds, but nobody is reading them. Restart the dashboard and run it again: the consumer catches up and the lag drops back to zero.
 
 > In the next session we'll use KEDA to automatically scale the consumer based on this lag.

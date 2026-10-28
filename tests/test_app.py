@@ -4,7 +4,7 @@ from app.consumer import events
 def test_dashboard_returns_html(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert "GridWatch" in response.text
+    assert "HomeGrid" in response.text
 
 
 def test_events_endpoint_empty(client):
