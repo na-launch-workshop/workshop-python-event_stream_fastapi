@@ -175,7 +175,7 @@ Open `devfile.yaml` and paste the following under the third `TODO` comment:
 ```yaml
   - name: price-api
     container:
-      image: quay.io/pknezevich/electricity-price-api:v1
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
       endpoints:
         - name: price-api
           exposure: internal

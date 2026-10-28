@@ -89,7 +89,7 @@ components:
 
   - name: price-api
     container:
-      image: quay.io/pknezevich/electricity-price-api:v1
+      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
       endpoints:
         - name: price-api
           exposure: internal

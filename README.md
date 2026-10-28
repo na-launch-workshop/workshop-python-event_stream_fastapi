@@ -46,7 +46,7 @@ Your job: add three sidecars to the workspace, one at a time. Each one wires up 
 
 ### Task 1 — Add the Kafka sidecar
 
-Open `devfile.yaml` and paste in the following component under the first `TODO` comment:
+Open `devfile.yaml` and paste in the following components under the first `TODO` comment — the Kafka broker and [Kafbat UI](https://github.com/kafbat/kafka-ui), a web console for browsing topics, messages and consumer groups:
 
 ```yaml
   - name: kafka
@@ -77,7 +77,27 @@ Open `devfile.yaml` and paste in the following component under the first `TODO` 
           value: "false"
       cpuLimit: '1'
       memoryLimit: '1Gi'
+  - name: kafka-ui
+    container:
+      image: ghcr.io/kafbat/kafka-ui:v1.5.0
+      endpoints:
+        - name: kafka-ui
+          exposure: public
+          protocol: https
+          targetPort: 8081
+          path: /
+      env:
+        - name: SERVER_PORT
+          value: "8081"
+        - name: KAFKA_CLUSTERS_0_NAME
+          value: homegrid
+        - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+          value: localhost:9092
+      cpuLimit: '500m'
+      memoryLimit: '1Gi'
 ```
+
+> Kafbat UI listens on port `8081` because the dashboard already uses `8080` — all sidecars in a workspace share one network.
 
 **Save, commit, push, restart the workspace.** Re-run **"1. Install dependencies"**.
 
@@ -101,6 +121,8 @@ Topic 'meter-readings' created on localhost:9092
 
 Run **"4. Start meter reading producer"** — the Live Readings panel fills with live data.
 
+Open the `kafka-ui` endpoint in a new browser tab. Under **Topics → meter-readings → Messages** you can watch each reading arrive as raw JSON.
+
 ---
 
 ### Task 4 — Add the datasette sidecar
@@ -110,7 +132,7 @@ Open `devfile.yaml` and paste in the following component under the second `TODO`
 ```yaml
   - name: datasette
     container:
-      image: datasetteproject/datasette
+      image: datasetteproject/datasette:0.65.5
       endpoints:
         - name: datasette
           exposure: internal
@@ -184,4 +206,14 @@ oc exec $(oc get pod -l controller.devfile.io/devworkspace_id=$DEVWORKSPACE_ID -
 
 Run it a few times and watch the **LAG** column grow — the producer keeps writing a reading every two seconds, but nobody is reading them. Restart the dashboard and run it again: the consumer catches up and the lag drops back to zero.
 
+You can watch the same lag in Kafbat UI under **Consumers → grid-dashboard**.
+
 > In the next session we'll use KEDA to automatically scale the consumer based on this lag.
+
+---
+
+## 🥚 Easter egg
+
+*"Doc Brown needs **1.21 gigawatts** on the **flux-capacitor** circuit. Can you send it through the grid?"*
+
+Hint: you don't need the producer script — Kafbat UI can send a message too. You'll know when you've found it. 🏆
