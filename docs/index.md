@@ -132,7 +132,7 @@ Open `devfile.yaml` and paste in the following component under the second `TODO`
 ```yaml
   - name: datasette
     container:
-      image: datasetteproject/datasette
+      image: datasetteproject/datasette:0.65.5
       endpoints:
         - name: datasette
           exposure: internal
@@ -175,7 +175,7 @@ Open `devfile.yaml` and paste the following under the third `TODO` comment:
 ```yaml
   - name: price-api
     container:
-      image: image-registry.openshift-image-registry.svc:5000/workspace-images/electricity-price-api:latest
+      image: quay.io/pknezevich/electricity-price-api:v1
       endpoints:
         - name: price-api
           exposure: internal
