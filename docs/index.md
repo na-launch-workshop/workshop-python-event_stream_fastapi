@@ -209,3 +209,11 @@ Run it a few times and watch the **LAG** column grow — the producer keeps writ
 You can watch the same lag in Kafbat UI under **Consumers → grid-dashboard**.
 
 > In the next session we'll use KEDA to automatically scale the consumer based on this lag.
+
+---
+
+## 🥚 Easter egg
+
+*"Doc Brown needs **1.21 gigawatts** on the **flux-capacitor** circuit. Can you send it through the grid?"*
+
+Hint: you don't need the producer script — Kafbat UI can send a message too. You'll know when you've found it. 🏆
