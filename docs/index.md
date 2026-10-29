@@ -163,6 +163,8 @@ This creates `data/appliances.db` with 10 appliances. Open the `datasette` endpo
 
 Add your own appliances using the SQLite Explorer extension (`zknpr.sqlite-explorer`):
 - Open `data/appliances.db` in the editor
+
+**Bonus challenge:** Add 10 more appliances to the database. Get creative — think home automation, workshop tools, entertainment systems. Each appliance needs a name and daily kWh consumption. Watch the Appliance Reference panel update in real time as you add them!
 - Add rows for any appliances you want to track
 - The Appliance Reference panel updates within 2 seconds
 
