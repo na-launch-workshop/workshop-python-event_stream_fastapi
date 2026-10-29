@@ -135,8 +135,10 @@ Open `devfile.yaml` and paste in the following component under the second `TODO`
       image: datasetteproject/datasette:0.65.5
       endpoints:
         - name: datasette
-          exposure: internal
+          exposure: public
+          protocol: https
           targetPort: 8001
+          path: /
       command: ["sh", "-c", "datasette serve \"$PROJECT_SOURCE/data/\" --host 0.0.0.0 --port 8001"]
       cpuLimit: '500m'
       memoryLimit: '512Mi'
